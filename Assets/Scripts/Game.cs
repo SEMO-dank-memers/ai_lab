@@ -8,10 +8,18 @@ public class Game : MonoBehaviour
     class Block
     {
         GameObject tile;
-        Vector2 pos;
+        Vector3 pos;
+        int x;
+        int y;
         bool hasPlayer = false;
         bool isOpen = true;
         bool hasEnemy = false;
+
+        public void SetXY(int p_x, int p_y)
+        {
+            x = p_x;
+            y = p_y;
+        }
 
         public void setTile(GameObject p_tile)
         {
@@ -38,14 +46,23 @@ public class Game : MonoBehaviour
             hasPlayer = true;
         }
 
-        public void setPos(int p_x, int p_y)
+        public void setPos(Vector3 p_pos)
         {
-            pos = new Vector2(p_x, p_y);
+            pos = p_pos;
         }
 
         public bool getOpen()
         {
             return isOpen;
+        }
+
+        public Cords getXY()
+        {
+            Cords retvar = new Cords();
+
+            retvar.x = x; retvar.y = y;
+
+            return retvar;
         }
     };
 
@@ -53,7 +70,20 @@ public class Game : MonoBehaviour
     private const int COLS = 7; //number for columns REMEMBER TO CHANGE THESE IF THE GRID LAYOUT CHANGES
 
     private Block[,] grid = new Block[ROWS,COLS]; //magic numbers are great!
-    private List<Block> playerPath;
+
+    struct Cords
+    {
+        public Cords (int p_x, int p_y)
+        {
+            x = p_x;
+            y = p_y;
+        }
+
+        public int x;
+        public int y;
+    }
+
+    private List<Cords> playerPath;
 
 
 	void Start()
@@ -69,7 +99,8 @@ public class Game : MonoBehaviour
                 {
                     grid[x, y].setOpen(false);
                 }
-                grid[x, y].setPos(x, y);
+                grid[x, y].setPos(grid[x, y].getTile().transform.position);
+                grid[x, y].SetXY(x, y);
                 i++; //increment our gridLayout index
             }
         }
@@ -81,9 +112,43 @@ public class Game : MonoBehaviour
         } while (!grid[x, y].getOpen()); //keep trying until we get a spawnpoint that's open
 
         grid[x, y].enter(); //move player to spawn
-        playerPath.Add(grid[x, y]);//player path has start point
+        playerPath.Add(grid[x, y].getXY());//player path has start point
 	}
-	
+
+    List<Cords> FindNeighbors(Cords test)
+    {
+        List<Cords> neighbors = new List<Cords>();
+        if (test.x != 0)
+        {
+            //check left
+            neighbors.Add(new Cords(test.x - 1, test.y));
+        }
+        if (test.x != 6)
+        {
+            //check right
+            neighbors.Add(new Cords(test.x + 1, test.y));
+        }
+        if (test.y != 6)
+        {
+            //check up
+            neighbors.Add(new Cords(test.x, test.y + 1));
+        }
+        if (test.y != 0)
+        {
+            //check down
+            neighbors.Add(new Cords(test.x, test.y - 1));
+        }
+        return neighbors;
+    }
+
+    List<Cords> FindBestPath(List<Cords> playerpath, Cords gp)
+    {
+        Cords current = playerpath[0];
+
+
+        return playerpath;
+    }
+
 	// Update is called once per frame
 	void Update()
     {
