@@ -367,8 +367,7 @@ public class Game : MonoBehaviour
 
 		//backwards trace to the player to get a path
 		List<Cords> newFullPath = new List<Cords>();
-		List<Cords> compPath = new List<Cords>();
-		List<Cords> newCompPath = new List<Cords>();
+		Cords comp;
 
 		int index = gp.score - 1;
 
@@ -376,24 +375,23 @@ public class Game : MonoBehaviour
 		Debug.Log(index);
 
 		partialPath.Add(gp);
-		compPath.Add(gp);
+		comp = new Cords(gp);
 		isFinished = false; //reuse isFinished
 
 		while (!isFinished) {
 			foreach (Cords tile in fullPath) {
 				if (tile.score == index) {
-					foreach (Cords comp in compPath) {
-						/*
-						Debug.Log("Comparison: (" + comp.x + ", " + comp.y + ")");
-						Debug.Log("Comparison index: " + comp.score);
-						Debug.Log("Tile: (" + tile.x + ", " + tile.y + ")");
-						Debug.Log("Tile index: " + tile.score);
-						Debug.Log('\n');*/
-						if (isAdjacent(comp, tile)) {
-							newCompPath.Add(tile);
-							partialPath.Add(tile);
-							break;
-						}
+					/*
+					Debug.Log("Comparison: (" + comp.x + ", " + comp.y + ")");
+					Debug.Log("Comparison index: " + comp.score);
+					Debug.Log("Tile: (" + tile.x + ", " + tile.y + ")");
+					Debug.Log("Tile index: " + tile.score);
+					Debug.Log('\n');
+					*/
+					if (isAdjacent(comp, tile)) {
+						comp = tile;
+						partialPath.Add(tile);
+						break;
 					}
 				} else { //strip away the higher level indexes
 					newFullPath.Add(tile);
@@ -402,16 +400,12 @@ public class Game : MonoBehaviour
 
 			//clean up and prepare compPath and fullPath for the next iteration
 			fullPath.Clear();
-			compPath.Clear();
 			foreach (Cords tile in newFullPath) {
 				fullPath.Add(tile);
 			}
-			foreach (Cords tile in newCompPath) {
-				compPath.Add(tile);
-			}
 			newFullPath.Clear();
-			newCompPath.Clear();
 			index--;
+
 			if (index < 0)
 				isFinished = true;
 		}
@@ -427,6 +421,7 @@ public class Game : MonoBehaviour
 			partialPath.Add(s.Peek());
 			s.Pop();
 		}
+
 
 		return partialPath;
 	}
