@@ -4,127 +4,72 @@ using UnityEngine;
 
 public class Game : MonoBehaviour
 {
-	public GameObject tileParent; //gridLayout
-	class Block
+	class Block //block represents each member of the grid
 	{
 		GameObject tile;
 		Transform pos;
-		//Vector3 pos;
-		int x;
-		int y;
+		int x, y; //x and y positions
 		bool hasPlayer = false;
 		bool isOpen = true;
-		bool hasEnemy = false;
 		public bool visited = false;
 
-		public bool containsPlayer()
-		{
-			return hasPlayer;
-		}
+		public bool containsPlayer() { return hasPlayer; }
 
-		public void SetXY(int p_x, int p_y)
-		{
-			x = p_x;
-			y = p_y;
-		}
+		public void SetXY(int p_x, int p_y) { x = p_x; y = p_y; }
 
-		public void setTile(GameObject p_tile)
-		{
-			tile = p_tile;
-		}
+		public void setTile(GameObject p_tile) { tile = p_tile; }
 
-		public GameObject getTile()
-		{
-			return tile;
-		}
+		public GameObject getTile() { return tile; }
 
-		public void setOpen(bool val)
-		{
-			isOpen = val;
-		}
+		public void setOpen(bool val) { isOpen = val; }
 
-		public void leave()
-		{
-			hasPlayer = false;
-		}
+		public void leave() { hasPlayer = false; }
 
-		public void enter()
-		{
-			hasPlayer = true;
-		}
+		public void enter() { hasPlayer = true; }
 
-		public void setPos(Transform p_pos)
-		{
-			pos = p_pos;
-		}
+		public void setPos(Transform p_pos) { pos = p_pos; }
 
-		public Transform getPos()
-		{
-			return pos;
-		}
+		public Transform getPos() { return pos; }
 
-		/*
-		public void setPos(Vector3 p_pos)
-		{
-			pos = p_pos;
-		}
+		public bool getOpen() { return isOpen; }
 
-		public Vector3 getPos()
-		{
-			return pos;
-		}
-		*/
-
-		public bool getOpen()
-		{
-			return isOpen;
-		}
-
-		public Cords getXY()
-		{
-			return new Cords(x, y);
-		}
+		public Cords getXY() { return new Cords(x, y); }
 	};
-
-	private Cords playerPos;
 
 	private const int ROWS = 7; //number for rows
 	private const int COLS = 7; //number for columns REMEMBER TO CHANGE THESE IF THE GRID LAYOUT CHANGES
 
-	private Block[,] grid = new Block[ROWS, COLS]; 
+	private Block[,] grid = new Block[ROWS, COLS];  //our grid for all of the logic in this game
 
-	class Cords
+	class Cords //Cords are a small struct to keep track of x,y values for pathing
 	{
-		public Cords(int p_x, int p_y, int p_score = -1)
-		{
-			x = p_x;
-			y = p_y;
-			score = p_score;
-		}
+		public Cords(int p_x, int p_y, int p_score = -1) { x = p_x; y = p_y; score = p_score; }
 
-		public Cords(Cords newCords)
-		{
-			x = newCords.x; y = newCords.y;
-		}
+		public Cords(Cords newCords) { x = newCords.x; y = newCords.y; score = newCords.score; }
 
 		public int x;
 		public int y;
 		public int score = -1; //default to impassable
-		public bool labled = false;
-		public bool visited = false;
 	}
 
-	private List<Cords> playerPath = new List<Cords>();
-	public GameObject Player;
-	public GameObject Finish;
-	private GameObject myPlayer;
-	private GameObject theGoalPoint;
-	private int interval = 1;
-	private int nextTime = 0;
-	private Vector3 StartPos;
-	private Vector3 EndPos;
-	private float t;
+	public GameObject tileParent; //gridLayout
+	public GameObject Player; //the player graphic
+	public GameObject Finish; //the end point graphic
 
+	private List<Cords> playerPath = new List<Cords>();
+	private GameObject myPlayer; //instance for the AI
+	private GameObject theGoalPoint; //instance for the goal
+
+	private int interval = 1; //interval for animations (currently one second)
+	private int nextTime = 0; //logic for making things timed
+	private Vector3 StartPos, EndPos; //vectors to move the objects graphically
+	private float t; //time for moving objects
+
+	/* Start
+	 * This is called at the beginning of the game.
+	 * 
+	 * Start will fill the grid array with the grid layout contents.
+	 */
 	void Start()
 	{
 		int i = 0; //index for our gridLayoutParent and it's parents
@@ -145,7 +90,8 @@ public class Game : MonoBehaviour
 			}
 		}
 
-		do //player spawn
+		//***the below logic is all for the player's spawning***
+		do
 		{
 			x = Random.Range(0, ROWS-1);
 			y = Random.Range(0, COLS-1);
@@ -153,41 +99,32 @@ public class Game : MonoBehaviour
 		grid[x, y].enter(); //move player to spawn
 		playerPath.Add(new Cords(x, y, 0)); //player path has start point
 		playerPath.Add(new Cords(x, y, 0)); //player path has start point
-		playerPath.Add(new Cords(x, y, 0)); //player path has start point
-		playerPos = new Cords(x, y, 0);
+		playerPath.Add(new Cords(x, y, 0)); //do it three times for the hack to get it to work
+		//Don't change the above unless you fix the spawn point stuff
+		myPlayer = Instantiate(Player, grid[x, y].getPos());
+		myPlayer.SetActive(false); //set to false so the player doesn't appear until he's on the grid (see: Update function)
 
+		//Debug info for spawnpoint
 		Debug.Log("Player spawn pos:");
 		Debug.Log(x);
 		Debug.Log(y);
 		Debug.Log('\n');
-		myPlayer = Instantiate(Player, grid[x, y].getPos());
-		myPlayer.SetActive(false);
-		//myPlayer.transform.position = grid[x, y].getPos().position;
 
-		do //goal point
-		{
-			x = Random.Range(0, ROWS-1);
-			y = Random.Range(0, COLS-1);
-		} while (!(grid[x, y].getOpen())); //keep trying until sp is open
-		Cords gp = new Cords(x, y);
-
-		Debug.Log("GoalPoint spawn pos:");
-		Debug.Log(x);
-		Debug.Log(y);
-		Debug.Log('\n');
-
-		theGoalPoint = Instantiate(Finish, grid[x, y].getPos());
-
+		Cords gp = SpawnGoalPoint();
 		List<Cords> thisPath = FindBestPath(gp);
 		foreach (Cords tile in thisPath) {
 			playerPath.Add(tile);
 		}
 
-
 	}
 
-	private int runs = 0;
+	private int runs = 0; //specifically to allow the player to be visible as part of our "hack"
 
+	/* Update
+	 * Called every frame.
+	 * 
+	 * It makes the player visible and does some other stuff.
+	 */
 	void Update()
 	{
 		if (runs == 3)
@@ -205,33 +142,69 @@ public class Game : MonoBehaviour
 
 	}
 
+	/* Restart
+	 * This is called everytime the goal point is reached and we need a new one and a new path
+	 * 
+	 * Doesn't return anything.
+	 */
 	void Restart()
 	{
 		int x, y;
-		for (y = 0; y < COLS; y++) { //reset visited for the path finding
-			for (x = 0; x < ROWS; x++) {
-				grid [x, y].visited = false;
-				/*if (grid[x, y].containsPlayer())
-					playerPath.Add(grid[x,y].getXY());*/
-			}
-		} //end for loops
+		CleanGrid();
 
-		do //new goal point
+		Cords gp = SpawnGoalPoint();
+
+		playerPath = FindBestPath(gp);
+	}
+
+	/* CleanGrid
+	 * This is called everytime we want to clean the grid for the next search in pathing.
+	 * 
+	 * After it is called, the grid's visited values will all be false.
+	 */ 
+	void CleanGrid()
+	{
+		for (int y = 0; y < COLS; y++) {
+			for (int x = 0; x < ROWS; x++) {
+				grid [x, y].visited = false; //reset visited for the path finding
+			}
+		}
+	}
+
+	/* SpawnGoalPoint
+	 * Spawns the goal point and destroys the old goal point (if it exists).
+	 * 
+	 * Returns the Cords for the new goal point for use with path finding.
+	 */ 
+	Cords SpawnGoalPoint()
+	{
+		int x, y;
+
+		do //goal point
 		{
 			x = Random.Range(0, ROWS-1);
 			y = Random.Range(0, COLS-1);
 		} while (!(grid[x, y].getOpen()) || (x == playerPath[0].x && y == playerPath[0].y)); //keep trying until sp is open
 		Cords gp = new Cords(x, y);
 
-		Destroy(theGoalPoint);
-		theGoalPoint = Instantiate(Finish, new Vector3(0,0,0), Quaternion.identity);
-		theGoalPoint.transform.SetParent(grid [x, y].getTile().gameObject.transform, false);
-		theGoalPoint.SetActive(true);
+		//Debug info for spawnpoint
+		Debug.Log("GoalPoint spawn pos:");
+		Debug.Log(x);
+		Debug.Log(y);
+		Debug.Log('\n');
 
-		playerPath = FindBestPath(gp);
+		Destroy(theGoalPoint);
+		theGoalPoint = Instantiate(Finish, grid[x, y].getPos());
+		//theGoalPoint = Instantiate(Finish, new Vector3(0,0,0), Quaternion.identity);
+		//theGoalPoint.transform.SetParent(grid [x, y].getTile().gameObject.transform, false);
+
+		//theGoalPoint = Instantiate(Finish, grid[x, y].getPos());
+		return gp;
 	}
 
-
+	/* MainFunc
+	 * The main function. It does shit.
+	 */
 	void MainFunc()
 	{
 		Debug.Log("Current Position: (" + playerPath[0].x + ", " + playerPath[0].y + ")");
@@ -251,6 +224,11 @@ public class Game : MonoBehaviour
 		t = 0; //reset timer
 	}
 
+	/* isAdjacent
+	 * Takes two arguments, both of types "Cords"
+	 * 
+	 * Returns true if one and two are adjacent.
+	 */
 	bool isAdjacent(Cords one, Cords two)
 	{
 		if (one.x-1 == two.x && one.y == two.y) {
@@ -269,7 +247,12 @@ public class Game : MonoBehaviour
 		return false;
 	}
 
-	bool checkSpot(int x, int y)
+	/* CheckSpot
+	 * Checks the current spot if it's open and if it's already been visited.
+	 * 
+	 * Returns true if it's available for pathing. False if otherwise.
+	 */
+	bool CheckSpot(int x, int y)
 	{
 		bool retvar = true;
 
@@ -281,16 +264,19 @@ public class Game : MonoBehaviour
 		return retvar;
 	}
 
+	/* FindBestPath
+	 * Searches for the best path for AI's chasing state
+	 * 
+	 * Takes a goal point (gp) and paths to that
+	 * 
+	 * Returns the list that is the best path
+	 */ 
 	List<Cords> FindBestPath(Cords gp)
 	{
 		int count = 0;
-
-		foreach (Cords tile in playerPath) {
-			Debug.Log("PlayerPath: (" + tile.x + ", " + tile.y + ")");
-		}
-
-		int x = playerPath[0].x;
+		int x = playerPath[0].x; //assume playerPath[0] will always contain the current position of the player
 		int y = playerPath[0].y;
+
 		bool isFinished = false;
 		Stack<Cords> check, move, temp;
 		check = new Stack<Cords>();
@@ -299,7 +285,7 @@ public class Game : MonoBehaviour
 		Cords StartPoint = playerPath[0];
 		StartPoint.score = 0;
 		List<Cords> fullPath = new List<Cords>();
-		List<Cords> partialPath = new List<Cords>(); //the list to be returned
+		List<Cords> bestPath = new List<Cords>(); //the list to be returned
 
 		grid[x, y].visited = true;
 		move.Push(new Cords(x, y, count));
@@ -313,25 +299,25 @@ public class Game : MonoBehaviour
 				x = move.Peek().x;
 				y = move.Peek().y;
 
-				if (x != 0 && checkSpot(x-1, y)) //check left
+				if (x != 0 && CheckSpot(x-1, y)) //check left
 				{
 					temp.Push(new Cords(x-1, y, count));
 					check.Push(new Cords(x-1, y, count));
 					fullPath.Add(new Cords(x-1, y, count));
 				}
-				if (x != 6 && checkSpot(x+1, y)) //check right
+				if (x != 6 && CheckSpot(x+1, y)) //check right
 				{
 					temp.Push(new Cords(x+1, y, count));
 					check.Push(new Cords(x+1, y, count));
 					fullPath.Add(new Cords(x+1, y, count));
 				}
-				if (y != 6 && checkSpot(x, y+1)) //check up
+				if (y != 6 && CheckSpot(x, y+1)) //check up
 				{
 					temp.Push(new Cords(x, y+1, count));
 					check.Push(new Cords(x, y+1, count));
 					fullPath.Add(new Cords(x, y+1, count));
 				}
-				if (y != 0 && checkSpot(x, y-1)) //check down
+				if (y != 0 && CheckSpot(x, y-1)) //check down
 				{
 					temp.Push(new Cords(x, y-1, count));
 					check.Push(new Cords(x, y-1, count));
@@ -356,41 +342,23 @@ public class Game : MonoBehaviour
 
 			temp.Clear();
 		}
-		/*
-		Debug.Log("fullPath:");
-		foreach (Cords tile in fullPath) {
-			Debug.Log(tile.x);
-			Debug.Log(tile.y);
-			Debug.Log('\n');
-		}
-		*/
 
 		//backwards trace to the player to get a path
-		List<Cords> newFullPath = new List<Cords>();
-		Cords comp;
+		List<Cords> newFullPath = new List<Cords>(); //new list to ensure we don't search through old values
+		Cords comp; //comparison value to be returned
 
-		int index = gp.score - 1;
+		int index = gp.score - 1; //set our search index to the next one down from the end point
 
-		Debug.Log("index:");
-		Debug.Log(index);
-
-		partialPath.Add(gp);
-		comp = new Cords(gp);
+		bestPath.Add(gp); //put goal point into
+		comp = new Cords(gp); //comparison value
 		isFinished = false; //reuse isFinished
 
 		while (!isFinished) {
 			foreach (Cords tile in fullPath) {
 				if (tile.score == index) {
-					/*
-					Debug.Log("Comparison: (" + comp.x + ", " + comp.y + ")");
-					Debug.Log("Comparison index: " + comp.score);
-					Debug.Log("Tile: (" + tile.x + ", " + tile.y + ")");
-					Debug.Log("Tile index: " + tile.score);
-					Debug.Log('\n');
-					*/
 					if (isAdjacent(comp, tile)) {
-						comp = tile;
-						partialPath.Add(tile);
+						comp = tile; //make the new value the next comparion value
+						bestPath.Add(tile);
 						break;
 					}
 				} else { //strip away the higher level indexes
@@ -398,31 +366,35 @@ public class Game : MonoBehaviour
 				}
 			}
 
-			//clean up and prepare compPath and fullPath for the next iteration
+			//clean up and prepare fullPath for the next iteration
 			fullPath.Clear();
 			foreach (Cords tile in newFullPath) {
 				fullPath.Add(tile);
 			}
 			newFullPath.Clear();
-			index--;
+			index--; //search for the next lowest scores
 
-			if (index < 0)
+			if (index < 0) //once we've gone below zero we've reached the goal point
 				isFinished = true;
 		}
 
+		/*
+		 * The following lines switch the order of the list (using a stack) to make the path in the correct order
+		 * Before, the path is gp -> intermediate pos(int) 3 -> int 2 -> int 1 -> player position
+		 * Afterwards, the path is player position -> int 1 -> int 2 -> int 3 -> gp
+		 */
 		Stack<Cords> s = new Stack<Cords>(); //create a stack to reverse our path
 
-		foreach (Cords tile in partialPath) {
+		foreach (Cords tile in bestPath) {
 			s.Push(tile);
 		}
-		partialPath.Clear();
+		bestPath.Clear(); //clean out the best path before we dump the correct order into it
 
 		while (!(s.Count == 0)) {
-			partialPath.Add(s.Peek());
+			bestPath.Add(s.Peek());
 			s.Pop();
 		}
 
-
-		return partialPath;
+		return bestPath;
 	}
 }
