@@ -17,6 +17,11 @@ public class Game : MonoBehaviour
 		bool hasEnemy = false;
 		public bool visited = false;
 
+		public bool containsPlayer()
+		{
+			return hasPlayer;
+		}
+
 		public void SetXY(int p_x, int p_y)
 		{
 			x = p_x;
@@ -81,6 +86,8 @@ public class Game : MonoBehaviour
 		}
 	};
 
+	private Cords playerPos;
+
 	private const int ROWS = 7; //number for rows
 	private const int COLS = 7; //number for columns REMEMBER TO CHANGE THESE IF THE GRID LAYOUT CHANGES
 
@@ -111,6 +118,7 @@ public class Game : MonoBehaviour
 	public GameObject Player;
 	public GameObject Finish;
 	private GameObject myPlayer;
+	private GameObject theGoalPoint;
 	private int interval = 1;
 	private int nextTime = 0;
 	private Vector3 StartPos;
@@ -146,6 +154,7 @@ public class Game : MonoBehaviour
 		playerPath.Add(new Cords(x, y, 0)); //player path has start point
 		playerPath.Add(new Cords(x, y, 0)); //player path has start point
 		playerPath.Add(new Cords(x, y, 0)); //player path has start point
+		playerPos = new Cords(x, y, 0);
 
 		Debug.Log("Player spawn pos:");
 		Debug.Log(x);
@@ -167,7 +176,7 @@ public class Game : MonoBehaviour
 		Debug.Log(y);
 		Debug.Log('\n');
 
-		Instantiate(Finish, grid[x, y].getPos());
+		theGoalPoint = Instantiate(Finish, grid[x, y].getPos());
 
 		List<Cords> thisPath = FindBestPath(gp);
 		foreach (Cords tile in thisPath) {
@@ -196,13 +205,50 @@ public class Game : MonoBehaviour
 
 	}
 
+	void Restart()
+	{
+		int x, y;
+		for (y = 0; y < COLS; y++) { //reset visited for the path finding
+			for (x = 0; x < ROWS; x++) {
+				grid [x, y].visited = false;
+				/*if (grid[x, y].containsPlayer())
+					playerPath.Add(grid[x,y].getXY());*/
+			}
+		} //end for loops
+
+		do //new goal point
+		{
+			x = Random.Range(0, ROWS-1);
+			y = Random.Range(0, COLS-1);
+		} while (!(grid[x, y].getOpen()) || (x == playerPath[0].x && y == playerPath[0].y)); //keep trying until sp is open
+		Cords gp = new Cords(x, y);
+
+		Destroy(theGoalPoint);
+		theGoalPoint = Instantiate(Finish, new Vector3(0,0,0), Quaternion.identity);
+		theGoalPoint.transform.SetParent(grid [x, y].getTile().gameObject.transform, false);
+		theGoalPoint.SetActive(true);
+
+		playerPath = FindBestPath(gp);
+	}
+
+
 	void MainFunc()
 	{
-		playerPath.RemoveAt(0);
-		Transform target = grid[playerPath[0].x, playerPath[0].y].getPos();
+		Debug.Log("Current Position: (" + playerPath[0].x + ", " + playerPath[0].y + ")");
+	
+		if (playerPath.Count == 1) {
+			Restart();
+		}
+
+		grid[playerPath[0].x, playerPath[0].y].leave(); //player leaves this grid
+
+		playerPath.RemoveAt(0); //remove the current grid
+		Debug.Log("Moving to: (" + playerPath[0].x + ", " + playerPath[0].y + ")");
+		grid[playerPath[0].x, playerPath[0].y].enter(); //player enters this grid
+		Transform target = grid[playerPath[0].x, playerPath[0].y].getPos(); //where we're moving
 		StartPos = myPlayer.transform.position;
 		EndPos = target.transform.position;
-		t = 0;
+		t = 0; //reset timer
 	}
 
 	bool isAdjacent(Cords one, Cords two)
@@ -238,6 +284,11 @@ public class Game : MonoBehaviour
 	List<Cords> FindBestPath(Cords gp)
 	{
 		int count = 0;
+
+		foreach (Cords tile in playerPath) {
+			Debug.Log("PlayerPath: (" + tile.x + ", " + tile.y + ")");
+		}
+
 		int x = playerPath[0].x;
 		int y = playerPath[0].y;
 		bool isFinished = false;
