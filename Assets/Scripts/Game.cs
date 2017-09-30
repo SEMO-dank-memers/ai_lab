@@ -9,11 +9,11 @@ public class Game : MonoBehaviour
 		GameObject tile;
 		Transform pos;
 		int x, y; //x and y positions
-		bool hasPlayer = false;
+		bool hasAI = false;
 		bool isOpen = true;
 		public bool visited = false;
 
-		public bool containsPlayer() { return hasPlayer; }
+		public bool containsAI() { return hasAI; }
 
 		public void SetXY(int p_x, int p_y) { x = p_x; y = p_y; }
 
@@ -23,9 +23,9 @@ public class Game : MonoBehaviour
 
 		public void setOpen(bool val) { isOpen = val; }
 
-		public void leave() { hasPlayer = false; }
+		public void leave() { hasAI = false; }
 
-		public void enter() { hasPlayer = true; }
+		public void enter() { hasAI = true; }
 
 		public void setPos(Transform p_pos) { pos = p_pos; }
 
@@ -53,11 +53,12 @@ public class Game : MonoBehaviour
 	}
 
 	public GameObject tileParent; //gridLayout
-	public GameObject Player; //the player graphic
+	public GameObject AI; //the AI graphic
 	public GameObject Finish; //the end point graphic
+	public GameObject Player; //the player graphic
 
-	private List<Cords> playerPath = new List<Cords>();
-	private GameObject myPlayer; //instance for the AI
+	private List<Cords> aiPath = new List<Cords>();
+	private GameObject theAI; //instance for the AI
 	private GameObject theGoalPoint; //instance for the goal
 
 	private int interval = 1; //interval for animations (currently one second)
@@ -90,45 +91,42 @@ public class Game : MonoBehaviour
 			}
 		}
 
-		//***the below logic is all for the player's spawning***
+		//***the below logic is all for the AI's spawning***
 		do
 		{
 			x = Random.Range(0, ROWS-1);
 			y = Random.Range(0, COLS-1);
 		} while (!(grid[x, y].getOpen())); //keep trying until we get a spawnpoint that's open
-		grid[x, y].enter(); //move player to spawn
-		playerPath.Add(new Cords(x, y, 0)); //player path has start point
-		playerPath.Add(new Cords(x, y, 0)); //player path has start point
-		playerPath.Add(new Cords(x, y, 0)); //do it three times for the hack to get it to work
+		grid[x, y].enter(); //move AI to spawn
+		aiPath.Add(new Cords(x, y, 0)); //AI path has start point
+		aiPath.Add(new Cords(x, y, 0)); //AI path has start point
+		aiPath.Add(new Cords(x, y, 0)); //do it three times for the hack to get it to work
 		//Don't change the above unless you fix the spawn point stuff
-		myPlayer = Instantiate(Player, grid[x, y].getPos());
-		myPlayer.SetActive(false); //set to false so the player doesn't appear until he's on the grid (see: Update function)
+		theAI = Instantiate(AI, grid[x, y].getPos());
+		theAI.SetActive(false); //set to false so the AI doesn't appear until he's on the grid (see: Update function)
 
 		//Debug info for spawnpoint
-		Debug.Log("Player spawn pos:");
-		Debug.Log(x);
-		Debug.Log(y);
-		Debug.Log('\n');
+		Debug.Log("AI spawn pos: (" + x + ", " + y + ")\n");
 
 		Cords gp = SpawnGoalPoint();
 		List<Cords> thisPath = FindBestPath(gp);
 		foreach (Cords tile in thisPath) {
-			playerPath.Add(tile);
+			aiPath.Add(tile);
 		}
 
 	}
 
-	private int runs = 0; //specifically to allow the player to be visible as part of our "hack"
+	private int runs = 0; //specifically to allow the AI to be visible as part of our "hack"
 
 	/* Update
 	 * Called every frame.
 	 * 
-	 * It makes the player visible and does some other stuff.
+	 * It makes the AI visible and does some other stuff.
 	 */
 	void Update()
 	{
 		if (runs == 3)
-			myPlayer.SetActive(true);
+			theAI.SetActive(true);
 
 		if (Time.time >= nextTime) {
 			nextTime += interval;
@@ -137,9 +135,7 @@ public class Game : MonoBehaviour
 		}
 
 		t += Time.deltaTime / interval;
-		myPlayer.transform.position = Vector3.Lerp(StartPos, EndPos, t);
-
-
+		theAI.transform.position = Vector3.Lerp(StartPos, EndPos, t);
 	}
 
 	/* Restart
@@ -149,12 +145,11 @@ public class Game : MonoBehaviour
 	 */
 	void Restart()
 	{
-		int x, y;
 		CleanGrid();
 
 		Cords gp = SpawnGoalPoint();
 
-		playerPath = FindBestPath(gp);
+		aiPath = FindBestPath(gp);
 	}
 
 	/* CleanGrid
@@ -184,14 +179,11 @@ public class Game : MonoBehaviour
 		{
 			x = Random.Range(0, ROWS-1);
 			y = Random.Range(0, COLS-1);
-		} while (!(grid[x, y].getOpen()) || (x == playerPath[0].x && y == playerPath[0].y)); //keep trying until sp is open
+		} while (!(grid[x, y].getOpen()) || (x == aiPath[0].x && y == aiPath[0].y)); //keep trying until sp is open
 		Cords gp = new Cords(x, y);
 
 		//Debug info for spawnpoint
-		Debug.Log("GoalPoint spawn pos:");
-		Debug.Log(x);
-		Debug.Log(y);
-		Debug.Log('\n');
+		Debug.Log("GoalPoint spawn pos: (" + x + ", " + y + ")\n");
 
 		Destroy(theGoalPoint);
 		theGoalPoint = Instantiate(Finish, grid[x, y].getPos());
@@ -207,19 +199,19 @@ public class Game : MonoBehaviour
 	 */
 	void MainFunc()
 	{
-		Debug.Log("Current Position: (" + playerPath[0].x + ", " + playerPath[0].y + ")");
+		Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
 	
-		if (playerPath.Count == 1) {
+		if (aiPath.Count == 1) {
 			Restart();
 		}
 
-		grid[playerPath[0].x, playerPath[0].y].leave(); //player leaves this grid
+		grid[aiPath[0].x, aiPath[0].y].leave(); //AI leaves this grid
 
-		playerPath.RemoveAt(0); //remove the current grid
-		Debug.Log("Moving to: (" + playerPath[0].x + ", " + playerPath[0].y + ")");
-		grid[playerPath[0].x, playerPath[0].y].enter(); //player enters this grid
-		Transform target = grid[playerPath[0].x, playerPath[0].y].getPos(); //where we're moving
-		StartPos = myPlayer.transform.position;
+		aiPath.RemoveAt(0); //remove the current grid
+		Debug.Log("Moving to: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
+		grid[aiPath[0].x, aiPath[0].y].enter(); //AI enters this grid
+		Transform target = grid[aiPath[0].x, aiPath[0].y].getPos(); //where we're moving
+		StartPos = theAI.transform.position;
 		EndPos = target.transform.position;
 		t = 0; //reset timer
 	}
@@ -274,15 +266,15 @@ public class Game : MonoBehaviour
 	List<Cords> FindBestPath(Cords gp)
 	{
 		int count = 0;
-		int x = playerPath[0].x; //assume playerPath[0] will always contain the current position of the player
-		int y = playerPath[0].y;
+		int x = aiPath[0].x; //assume aiPath[0] will always contain the current position of the AI
+		int y = aiPath[0].y;
 
 		bool isFinished = false;
 		Stack<Cords> check, move, temp;
 		check = new Stack<Cords>();
 		move = new Stack<Cords>();
 		temp = new Stack<Cords>();
-		Cords StartPoint = playerPath[0];
+		Cords StartPoint = aiPath[0];
 		StartPoint.score = 0;
 		List<Cords> fullPath = new List<Cords>();
 		List<Cords> bestPath = new List<Cords>(); //the list to be returned
@@ -343,7 +335,7 @@ public class Game : MonoBehaviour
 			temp.Clear();
 		}
 
-		//backwards trace to the player to get a path
+		//backwards trace to the AI to get a path
 		List<Cords> newFullPath = new List<Cords>(); //new list to ensure we don't search through old values
 		Cords comp; //comparison value to be returned
 
@@ -380,8 +372,8 @@ public class Game : MonoBehaviour
 
 		/*
 		 * The following lines switch the order of the list (using a stack) to make the path in the correct order
-		 * Before, the path is gp -> intermediate pos(int) 3 -> int 2 -> int 1 -> player position
-		 * Afterwards, the path is player position -> int 1 -> int 2 -> int 3 -> gp
+		 * Before, the path is gp -> intermediate pos(int) 3 -> int 2 -> int 1 -> AI position
+		 * Afterwards, the path is AI position -> int 1 -> int 2 -> int 3 -> gp
 		 */
 		Stack<Cords> s = new Stack<Cords>(); //create a stack to reverse our path
 

@@ -3912,8 +3912,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileParent: {fileID: 8069611}
-  Player: {fileID: 1253370624350228, guid: 15aaf0f748914604d977f497179a61b7, type: 2}
+  AI: {fileID: 1253370624350228, guid: 15aaf0f748914604d977f497179a61b7, type: 2}
   Finish: {fileID: 1603265275894456, guid: 3ab1a11aca588a043b1fee9a40b5ca82, type: 2}
+  Player: {fileID: 1602269146911242, guid: 5757f415f8815be409ac431eaaa2c96c, type: 2}
 --- !u!1 &1548708639
 GameObject:
   m_ObjectHideFlags: 0
