@@ -144,14 +144,16 @@ public class Game : MonoBehaviour
 		} while (!(grid[x, y].getOpen())); //keep trying until we get a spawnpoint that's open
 		grid[x, y].enter(); //move player to spawn
 		playerPath.Add(new Cords(x, y, 0)); //player path has start point
+		playerPath.Add(new Cords(x, y, 0)); //player path has start point
+		playerPath.Add(new Cords(x, y, 0)); //player path has start point
 
 		Debug.Log("Player spawn pos:");
 		Debug.Log(x);
 		Debug.Log(y);
 		Debug.Log('\n');
-
 		myPlayer = Instantiate(Player, grid[x, y].getPos());
-		myPlayer.transform.position = grid[x, y].getPos().position;
+		myPlayer.SetActive(false);
+		//myPlayer.transform.position = grid[x, y].getPos().position;
 
 		do //goal point
 		{
@@ -167,18 +169,31 @@ public class Game : MonoBehaviour
 
 		Instantiate(Finish, grid[x, y].getPos());
 
-		playerPath = FindBestPath(gp);
+		List<Cords> thisPath = FindBestPath(gp);
+		foreach (Cords tile in thisPath) {
+			playerPath.Add(tile);
+		}
+
+
 	}
+
+	private int runs = 0;
 
 	void Update()
 	{
+		if (runs == 3)
+			myPlayer.SetActive(true);
+
 		if (Time.time >= nextTime) {
 			nextTime += interval;
 			MainFunc();
+			runs++;
 		}
 
 		t += Time.deltaTime / interval;
 		myPlayer.transform.position = Vector3.Lerp(StartPos, EndPos, t);
+
+
 	}
 
 	void MainFunc()
