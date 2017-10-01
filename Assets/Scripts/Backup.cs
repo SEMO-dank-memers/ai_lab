@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Game : MonoBehaviour
+//public class Game : MonoBehaviour
+public class Backup : MonoBehaviour
 {
 	class Block //block represents each member of the grid
 	{
@@ -72,6 +73,7 @@ public class Game : MonoBehaviour
 	private Vector3 ai_StartPos, ai_EndPos; //vectors to move the objects graphically
 	private Vector3 player_StartPos, player_EndPos; //vectors to move the objects graphically
 	private float t; //time for moving objects
+	private Cords playCords; //for player
 
 	/* Start
 	 * This is called at the beginning of the game.
@@ -117,13 +119,17 @@ public class Game : MonoBehaviour
 			aiPath.Add(tile);
 		}
 
+		thePlayer = Instantiate(Player, grid[6, 1].getPos()); //spawn player
+		thePlayer.SetActive(false);
+		player_EndPos = grid[6, 1].getPos().position;
+		playerPos = new Cords(6, 1);
+		playCords = new Cords(6, 1);
 	}
 
 	private int runs = 0; //specifically to allow the AI to be visible as part of our "hack"
 	private bool waitingForInput = false;
 	private bool hasSpawned = false;
 	private bool isHack = false; //don't even ask
-
 
 	/* Update
 	 * Called every frame.
@@ -134,78 +140,47 @@ public class Game : MonoBehaviour
 	{
 		if (waitingForInput) {
 			Time.timeScale = 0;
-			thePlayer.transform.position = Vector3.Lerp(player_StartPos, player_EndPos, 0);
-			//Debug.Log("The Player's Position: " + thePlayer.transform.position);
 		} else
 			Time.timeScale = 1;
 
 		if (waitingForInput) {
-			Cords checkCords;
 			if (Input.GetKey("up")) {
-				checkCords = new Cords(playerPos.x, playerPos.y+1);
-				if (CheckMovePlayer(checkCords)) {
-					MovePlayer(checkCords);
+				playCords = new Cords(playerPos.x, playerPos.y+1);
+				if (CheckMovePlayer(playCords))
 					waitingForInput = false;
-				}
 			} else if (Input.GetKey("down")) {
-				checkCords = new Cords(playerPos.x, playerPos.y-1);
-				if (CheckMovePlayer(checkCords)) {
-					MovePlayer(checkCords);
+				playCords = new Cords(playerPos.x, playerPos.y-1);
+				if (CheckMovePlayer(playCords))
 					waitingForInput = false;
-				}
 			} else if (Input.GetKey("left")) {
-				checkCords = new Cords(playerPos.x+1, playerPos.y);
-				if (CheckMovePlayer(checkCords)) {
-					MovePlayer(checkCords);
+				playCords = new Cords(playerPos.x+1, playerPos.y);
+				if (CheckMovePlayer(playCords))
 					waitingForInput = false;
-				}
 			} else if (Input.GetKey("right")) {
-				checkCords = new Cords(playerPos.x-1, playerPos.y);
-				if (CheckMovePlayer(checkCords)) {
-					MovePlayer(checkCords);
+				playCords = new Cords(playerPos.x-1, playerPos.y);
+				if (CheckMovePlayer(playCords))
 					waitingForInput = false;
-				}
 			}
 		}
 
-		if (runs > 6) {
-			t += Time.deltaTime / interval;
-			theAI.transform.position = Vector3.Lerp(ai_StartPos, ai_EndPos, t);
-			thePlayer.transform.position = Vector3.Lerp(player_StartPos, player_EndPos, t);
-		} else if (runs == 3 && !hasSpawned) {
-			theAI.SetActive(true);
+		if (runs == 3 && !hasSpawned) {
 			hasSpawned = true;
-			thePlayer = Instantiate(Player, grid[6, 1].getPos());
-			thePlayer.SetActive(false);
-		} else if (runs == 6) { //spawn player on 6th turn
+			theAI.SetActive(true);
 			thePlayer.SetActive(true);
 		}
 
 		if (Time.time >= nextTime) {
 			nextTime += interval;
-			MainFunc();
-			if (runs < 7) //cap for potential integer overflow
+			MainFunc(playCords);
+			if (runs < 6) //cap for potential integer overflow
 				runs++;
-			else {
-				if (!isHack) {
-					isHack = true;
-					player_StartPos = grid[6, 2].getPos().position;
-					playerPos = new Cords(6, 2);
-				}
+			else
 				waitingForInput = true;
-			}
 		}
 
-		if (runs < 7) {
-			t += Time.deltaTime / interval;
-			theAI.transform.position = Vector3.Lerp(ai_StartPos, ai_EndPos, t);
-		}
-		if (runs > 3 && runs < 5) {
-			player_StartPos = grid[6, 1].getPos().position;
-			player_EndPos = grid[6, 2].getPos().position;
-			thePlayer.transform.position = Vector3.Lerp(player_StartPos, grid[6, 1].getPos().position, t);
-		}
-
+		t += Time.deltaTime / interval;
+		theAI.transform.position = Vector3.Lerp(ai_StartPos, ai_EndPos, t);
+		thePlayer.transform.position = Vector3.Lerp(player_StartPos, player_EndPos, t);
 	}
 
 	/* Restart
@@ -340,10 +315,11 @@ public class Game : MonoBehaviour
 	/* MainFunc
 	 * The main function. It does shit.
 	 */
-	void MainFunc()
+	void MainFunc(Cords PlayerCords)
 	{
+		MovePlayer(PlayerCords);
 		Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
-	
+
 		if (aiPath.Count == 1) {
 			Restart();
 		}
