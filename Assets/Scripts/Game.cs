@@ -347,7 +347,7 @@ public class Game : MonoBehaviour
 		MovePlayer(pos);
         //Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
         setFSM();
-		if (isNear > isFar) {
+		if (isNear >= isFar) {
             //evading
             theAI.GetComponent<Renderer>().material.color = Color.red;
 			reset = true;
@@ -648,17 +648,15 @@ public class Game : MonoBehaviour
         else result = (x / (x1 - x0)) - (x0 / (x1 - x0));
         return result;
     }
-    float NOT(float f) { return (1 - f); }
-    float OR(float f1, float f2) { return Math.Max(f1, f2); }
-    float AND(float f1, float f2) { return Math.Min(f1, f2); }
+    float NOT(float f1) { return (1 - f1); }
+    //float OR(float f1, float f2) { return Math.Max(f1, f2); }
+    //float AND(float f1, float f2) { return Math.Min(f1, f2); }
     void setFSM()
     {
         float distX = playerPos.x - aiPos.x;
         float distY = playerPos.y - aiPos.y;
-        float distance = ((distX * distX) + (distY * distY)) * (0.5f);
-        isFar = linear(distance, 3.0f, 7.0f); //should define what is considered as far
-        isNear = linear(distance, 0, 2.9f);
-        evade = NOT(isFar); //the enemy is not far
-        pursue = NOT(isNear); //the enemy is not near
+        float distance = (float)Math.Sqrt((distX * distX) + (distY * distY));
+        isFar = linear(distance, 3.0f, 6.0f); //should define what is considered as far
+        isNear = NOT(isFar);
     }
 }
