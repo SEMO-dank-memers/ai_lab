@@ -365,6 +365,8 @@ public class Game : MonoBehaviour
             //pursuing
             theAI.GetComponent<Renderer>().material.color = Color.green;
             if (reset) {
+				if (aiPos.x == goalPos.x && aiPos.y == goalPos.y)
+					SpawnGoalPoint();
 				reset = false;
 				aiPath.Clear();
 				aiPath.Add(aiPos);

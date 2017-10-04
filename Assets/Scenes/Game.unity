@@ -3547,12 +3547,12 @@ Prefab:
     - target: {fileID: 224968075272133722, guid: 93393410135d37f4e813d19d0395d80f,
         type: 2}
       propertyPath: m_AnchoredPosition.x
-      value: -1.17
+      value: -0.515
       objectReference: {fileID: 0}
     - target: {fileID: 224968075272133722, guid: 93393410135d37f4e813d19d0395d80f,
         type: 2}
       propertyPath: m_AnchoredPosition.y
-      value: 0.13999939
+      value: 0.112
       objectReference: {fileID: 0}
     - target: {fileID: 224968075272133722, guid: 93393410135d37f4e813d19d0395d80f,
         type: 2}
@@ -4434,12 +4434,12 @@ Prefab:
     - target: {fileID: 224968075272133722, guid: 93393410135d37f4e813d19d0395d80f,
         type: 2}
       propertyPath: m_AnchoredPosition.x
-      value: -2.85
+      value: -2.114
       objectReference: {fileID: 0}
     - target: {fileID: 224968075272133722, guid: 93393410135d37f4e813d19d0395d80f,
         type: 2}
       propertyPath: m_AnchoredPosition.y
-      value: 0.14
+      value: 0.112
       objectReference: {fileID: 0}
     - target: {fileID: 224968075272133722, guid: 93393410135d37f4e813d19d0395d80f,
         type: 2}
@@ -5093,6 +5093,10 @@ Prefab:
     - target: {fileID: 50305000452268332, guid: 5757f415f8815be409ac431eaaa2c96c,
         type: 2}
       propertyPath: m_GravityScale
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1602269146911242, guid: 5757f415f8815be409ac431eaaa2c96c, type: 2}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
