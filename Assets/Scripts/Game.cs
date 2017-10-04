@@ -206,7 +206,7 @@ public class Game : MonoBehaviour
 		}
 	}
 
-	Cords AIRetreatMove()
+	Cords AIAvoidMove()
 	{
 		CleanGridValues();
 
@@ -233,9 +233,27 @@ public class Game : MonoBehaviour
 			aiOptions.Add(new Cords(x, y-1, grid[x, y-1].value));
 		}
 
+		List<Cords> moveChoices = new List<Cords>();
+
 		foreach (Cords tile in aiOptions) {
 			if (move.score < tile.score)
 				move = new Cords(tile);
+		}
+
+		moveChoices.Add(move);
+
+		foreach (Cords tile in aiOptions) {
+			if (move.score == tile.score)
+				moveChoices.Add(tile);
+		}
+
+		int rand;
+
+		if (moveChoices.Count > 1) {
+			rand = Random.Range(0, moveChoices.Count);
+			move = moveChoices[rand];
+		} else {
+			move = moveChoices[0];
 		}
 
 		return move;
@@ -318,20 +336,18 @@ public class Game : MonoBehaviour
 	 * The main function. It does shit.
 	 */
 	bool reset = false;
-	private int counter = 0;
 	void MainFunc(Cords pos)
 	{
 		MovePlayer(pos);
 		//Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
 	
-		if (counter < 9) {
-			counter++;
+		if (true) {
 			reset = true;
 			Debug.Log("AI Position: (" + aiPos.x + ", " + aiPos.y + ")");
 			Debug.Log("Goal Position: (" + goalPos.x + ", " + goalPos.y + ")");
 			if (aiPos.x == goalPos.x && aiPos.y == goalPos.y)
 				SpawnGoalPoint();
-			Cords nextPos = AIRetreatMove();
+			Cords nextPos = AIAvoidMove();
 			aiPos = new Cords(nextPos.x, nextPos.y);
 			ai_StartPos = theAI.transform.position;
 			Transform target = grid[nextPos.x, nextPos.y].getPos(); //where we're moving
@@ -406,10 +422,11 @@ public class Game : MonoBehaviour
 	{
 		int count;
 
-		if (isGoal)
-			count = 9;
-		else
-			count = -12;
+		if (isGoal) {
+			grid[playerPos.x, playerPos.y].visited = true;
+			count = 7;
+		} else
+			count = -15;
 
 		int x = pos.x;
 		int y = pos.y;
