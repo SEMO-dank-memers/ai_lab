@@ -107,6 +107,7 @@ public class Game : MonoBehaviour
 		//Don't change the above unless you fix the spawn point stuff
 		theAI = Instantiate(AI, grid[x, y].getPos());
 		theAI.SetActive(false); //set to false so the AI doesn't appear until he's on the grid (see: Update function)
+		aiPos = new Cords(x, y);
 
 		//Debug info for spawnpoint
 		Debug.Log("AI spawn pos: (" + x + ", " + y + ")\n");
@@ -117,12 +118,15 @@ public class Game : MonoBehaviour
 			aiPath.Add(tile);
 		}
 
+		player_EndPos = grid[6, 1].getPos().position;
+		playerPos = new Cords(6, 1);
 	}
 
 	private int runs = 0; //specifically to allow the AI to be visible as part of our "hack"
 	private bool waitingForInput = false;
 	private bool hasSpawned = false;
 	private bool isHack = false; //don't even ask
+	private Cords playCords = new Cords(6, 1);
 
 
 	/* Update
@@ -132,39 +136,29 @@ public class Game : MonoBehaviour
 	 */
 	void Update()
 	{
-		if (waitingForInput) {
-			Time.timeScale = 0;
-			thePlayer.transform.position = Vector3.Lerp(player_StartPos, player_EndPos, 0);
-			//Debug.Log("The Player's Position: " + thePlayer.transform.position);
-		} else
-			Time.timeScale = 1;
-
-		if (waitingForInput) {
-			Cords checkCords;
-			if (Input.GetKey("up")) {
-				checkCords = new Cords(playerPos.x, playerPos.y+1);
-				if (CheckMovePlayer(checkCords)) {
-					MovePlayer(checkCords);
-					waitingForInput = false;
-				}
-			} else if (Input.GetKey("down")) {
-				checkCords = new Cords(playerPos.x, playerPos.y-1);
-				if (CheckMovePlayer(checkCords)) {
-					MovePlayer(checkCords);
-					waitingForInput = false;
-				}
-			} else if (Input.GetKey("left")) {
-				checkCords = new Cords(playerPos.x+1, playerPos.y);
-				if (CheckMovePlayer(checkCords)) {
-					MovePlayer(checkCords);
-					waitingForInput = false;
-				}
-			} else if (Input.GetKey("right")) {
-				checkCords = new Cords(playerPos.x-1, playerPos.y);
-				if (CheckMovePlayer(checkCords)) {
-					MovePlayer(checkCords);
-					waitingForInput = false;
-				}
+		if (Input.GetKey("up")) {
+			Cords checkCords = new Cords(playerPos.x, playerPos.y+1);
+			if (CheckMovePlayer(checkCords)) {
+				playCords = new Cords(playerPos.x, playerPos.y+1);
+				//waitingForInput = false;
+			}
+		} else if (Input.GetKey("down")) {
+			Cords checkCords = new Cords(playerPos.x, playerPos.y-1);
+			if (CheckMovePlayer(checkCords)) {
+			playCords = new Cords(playerPos.x, playerPos.y-1);
+			//waitingForInput = false;
+			}
+		} else if (Input.GetKey("left")) {
+			Cords checkCords = new Cords(playerPos.x+1, playerPos.y);
+			if (CheckMovePlayer(checkCords)) {
+				playCords = new Cords(playerPos.x+1, playerPos.y);
+				//waitingForInput = false;
+			}
+		} else if (Input.GetKey("right")) {
+			Cords checkCords = new Cords(playerPos.x-1, playerPos.y);
+			if (CheckMovePlayer(checkCords)) {
+				playCords = new Cords(playerPos.x-1, playerPos.y);
+				//waitingForInput = false;
 			}
 		}
 
@@ -179,21 +173,15 @@ public class Game : MonoBehaviour
 			thePlayer.SetActive(false);
 		} else if (runs == 6) { //spawn player on 6th turn
 			thePlayer.SetActive(true);
+			player_StartPos = grid[6, 1].getPos().position;
+			player_StartPos = grid[6, 1].getPos().position;
 		}
 
 		if (Time.time >= nextTime) {
 			nextTime += interval;
-			MainFunc();
+			MainFunc(playCords);
 			if (runs < 7) //cap for potential integer overflow
 				runs++;
-			else {
-				if (!isHack) {
-					isHack = true;
-					player_StartPos = grid[6, 2].getPos().position;
-					playerPos = new Cords(6, 2);
-				}
-				waitingForInput = true;
-			}
 		}
 
 		if (runs < 7) {
@@ -202,7 +190,7 @@ public class Game : MonoBehaviour
 		}
 		if (runs > 3 && runs < 5) {
 			player_StartPos = grid[6, 1].getPos().position;
-			player_EndPos = grid[6, 2].getPos().position;
+			//player_EndPos = grid[6, 2].getPos().position;
 			thePlayer.transform.position = Vector3.Lerp(player_StartPos, grid[6, 1].getPos().position, t);
 		}
 
@@ -236,6 +224,11 @@ public class Game : MonoBehaviour
 
 	Cords AIRetreatMove()
 	{
+		CleanGridValues();
+
+		GiveValues(goalPos, true);
+		GiveValues(playerPos, false);
+
 		int x = aiPos.x;
 		int y = aiPos.y;
 
@@ -323,7 +316,7 @@ public class Game : MonoBehaviour
 		{
 			x = Random.Range(0, ROWS-1);
 			y = Random.Range(0, COLS-1);
-		} while (!(grid[x, y].getOpen()) || (x == aiPath[0].x && y == aiPath[0].y)); //keep trying until sp is open
+		} while (!(grid[x, y].getOpen()) || (x == aiPos.x && y == aiPos.y)); //keep trying until sp is open
 		goalPos = new Cords(x, y);
 
 		//Debug info for spawnpoint
@@ -340,23 +333,50 @@ public class Game : MonoBehaviour
 	/* MainFunc
 	 * The main function. It does shit.
 	 */
-	void MainFunc()
+	bool reset = false;
+	private int counter = 0;
+	void MainFunc(Cords pos)
 	{
-		Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
+		if (runs > 6)
+			MovePlayer(playCords);
+		//Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
 	
-		if (aiPath.Count == 1) {
-			Restart();
+		if (counter < 9) {
+			counter++;
+			reset = true;
+			Debug.Log("AI Position: (" + aiPos.x + ", " + aiPos.y + ")");
+			Debug.Log("Goal Position: (" + goalPos.x + ", " + goalPos.y + ")");
+			if (aiPos.x == goalPos.x && aiPos.y == goalPos.y)
+				SpawnGoalPoint();
+			Cords nextPos = AIRetreatMove();
+			aiPos = new Cords(nextPos.x, nextPos.y);
+			ai_StartPos = theAI.transform.position;
+			Transform target = grid[nextPos.x, nextPos.y].getPos(); //where we're moving
+			ai_EndPos = target.transform.position;
+			t = 0; //reset timer
+		} else {
+			if (reset) {
+				reset = false;
+				aiPath.Clear();
+				aiPath.Add(aiPos);
+				aiPath = FindBestPath(goalPos);
+			}
+
+			if (aiPath.Count <= 1) {
+				Restart();
+			}
+
+			grid[aiPath[0].x, aiPath[0].y].leave(); //AI leaves this grid
+
+			aiPath.RemoveAt(0); //remove the current grid
+			Debug.Log("Moving to: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
+			grid[aiPath[0].x, aiPath[0].y].enter(); //AI enters this grid
+			Transform target = grid[aiPath[0].x, aiPath[0].y].getPos(); //where we're moving
+			aiPos.x = aiPath[0].x; aiPos.y = aiPath[0].y;
+			ai_StartPos = theAI.transform.position;
+			ai_EndPos = target.transform.position;
+			t = 0; //reset timer
 		}
-
-		grid[aiPath[0].x, aiPath[0].y].leave(); //AI leaves this grid
-
-		aiPath.RemoveAt(0); //remove the current grid
-		Debug.Log("Moving to: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
-		grid[aiPath[0].x, aiPath[0].y].enter(); //AI enters this grid
-		Transform target = grid[aiPath[0].x, aiPath[0].y].getPos(); //where we're moving
-		ai_StartPos = theAI.transform.position;
-		ai_EndPos = target.transform.position;
-		t = 0; //reset timer
 	}
 
 	/* isAdjacent
@@ -406,7 +426,7 @@ public class Game : MonoBehaviour
 		if (isGoal)
 			count = 9;
 		else
-			count = -9;
+			count = -12;
 
 		int x = pos.x;
 		int y = pos.y;
@@ -438,7 +458,7 @@ public class Game : MonoBehaviour
 					temp.Push(new Cords(x-1, y));
 				}
 				if (x != 6 && CheckSpot(x+1, y)) { //check right
-					grid[x-1, y].visited = true;
+					grid[x+1, y].visited = true;
 					grid[x+1, y].value = count;
 					temp.Push(new Cords(x+1, y));
 				}
@@ -479,6 +499,8 @@ public class Game : MonoBehaviour
 	{
 		CleanGrid(); //clean the grid before we use it
 		int count = 0;
+		if (aiPath.Count == 0)
+			aiPath.Add(new Cords(aiPos.x, aiPos.y, 0));
 		int x = aiPath[0].x; //assume aiPath[0] will always contain the current position of the AI
 		int y = aiPath[0].y;
 
