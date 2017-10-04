@@ -4,4 +4,4 @@ Aaron Gunther - Created prefabs, grid, found textures, created scoreboard script
 
 Jonathon Bryant -  Helped with the coding of the fuzzy logic and writing the second report. Helped debug exercise 2.
 
-Stephen Sladek - 
+Stephen Sladek - Helped with the logic for the avoid state, coded the fuzzy logic, and helped with the second part of the report.
