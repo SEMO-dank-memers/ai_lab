@@ -1,9 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Game : MonoBehaviour
 {
+	private int g_score = -1;
+	public GameObject scoretext;
 	class Block //block represents each member of the grid
 	{
 		GameObject tile;
@@ -313,6 +316,8 @@ public class Game : MonoBehaviour
 	void SpawnGoalPoint()
 	{
 		int x, y;
+		g_score++;
+		scoretext.GetComponent<UnityEngine.UI.Text>().text = g_score.ToString();
 
 		do //goal point
 		{
