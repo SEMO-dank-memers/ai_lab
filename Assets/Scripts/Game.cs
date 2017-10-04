@@ -118,16 +118,16 @@ public class Game : MonoBehaviour
 			aiPath.Add(tile);
 		}
 
+		thePlayer = Instantiate(Player, grid[6, 1].getPos());
+		player_StartPos = thePlayer.transform.position;
 		player_EndPos = grid[6, 1].getPos().position;
+		thePlayer.SetActive(false);
 		playerPos = new Cords(6, 1);
 	}
 
 	private int runs = 0; //specifically to allow the AI to be visible as part of our "hack"
-	private bool waitingForInput = false;
 	private bool hasSpawned = false;
-	private bool isHack = false; //don't even ask
 	private Cords playCords = new Cords(6, 1);
-
 
 	/* Update
 	 * Called every frame.
@@ -162,20 +162,15 @@ public class Game : MonoBehaviour
 			}
 		}
 
-		if (runs > 6) {
-			t += Time.deltaTime / interval;
-			theAI.transform.position = Vector3.Lerp(ai_StartPos, ai_EndPos, t);
-			thePlayer.transform.position = Vector3.Lerp(player_StartPos, player_EndPos, t);
-		} else if (runs == 3 && !hasSpawned) {
+		if (runs == 3 && !hasSpawned) {
 			theAI.SetActive(true);
 			hasSpawned = true;
-			thePlayer = Instantiate(Player, grid[6, 1].getPos());
-			thePlayer.SetActive(false);
-		} else if (runs == 6) { //spawn player on 6th turn
 			thePlayer.SetActive(true);
-			player_StartPos = grid[6, 1].getPos().position;
-			player_StartPos = grid[6, 1].getPos().position;
 		}
+
+		t += Time.deltaTime / interval;
+		theAI.transform.position = Vector3.Lerp(ai_StartPos, ai_EndPos, t);
+		thePlayer.transform.position = Vector3.Lerp(player_StartPos, player_EndPos, t);
 
 		if (Time.time >= nextTime) {
 			nextTime += interval;
@@ -183,17 +178,6 @@ public class Game : MonoBehaviour
 			if (runs < 7) //cap for potential integer overflow
 				runs++;
 		}
-
-		if (runs < 7) {
-			t += Time.deltaTime / interval;
-			theAI.transform.position = Vector3.Lerp(ai_StartPos, ai_EndPos, t);
-		}
-		if (runs > 3 && runs < 5) {
-			player_StartPos = grid[6, 1].getPos().position;
-			//player_EndPos = grid[6, 2].getPos().position;
-			thePlayer.transform.position = Vector3.Lerp(player_StartPos, grid[6, 1].getPos().position, t);
-		}
-
 	}
 
 	/* Restart
@@ -337,8 +321,7 @@ public class Game : MonoBehaviour
 	private int counter = 0;
 	void MainFunc(Cords pos)
 	{
-		if (runs > 6)
-			MovePlayer(playCords);
+		MovePlayer(pos);
 		//Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
 	
 		if (counter < 9) {
