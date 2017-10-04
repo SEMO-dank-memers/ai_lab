@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -100,8 +101,8 @@ public class Game : MonoBehaviour
 
 		//***the below logic is all for the AI's spawning***
 		do {
-			x = Random.Range(0, ROWS-1);
-			y = Random.Range(0, COLS-1);
+			x = UnityEngine.Random.Range(0, ROWS-1);
+			y = UnityEngine.Random.Range(0, COLS-1);
 		} while (!(grid[x, y].getOpen())); //keep trying until we get a spawnpoint that's open
 		grid[x, y].enter(); //move AI to spawn
 		aiPath.Add(new Cords(x, y, 0)); //AI path has start point
@@ -253,7 +254,7 @@ public class Game : MonoBehaviour
 		int rand;
 
 		if (moveChoices.Count > 1) {
-			rand = Random.Range(0, moveChoices.Count);
+			rand = UnityEngine.Random.Range(0, moveChoices.Count);
 			move = moveChoices[rand];
 		} else {
 			move = moveChoices[0];
@@ -321,8 +322,8 @@ public class Game : MonoBehaviour
 
 		do //goal point
 		{
-			x = Random.Range(0, ROWS-1);
-			y = Random.Range(0, COLS-1);
+			x = UnityEngine.Random.Range(0, ROWS-1);
+			y = UnityEngine.Random.Range(0, COLS-1);
 		} while (!(grid[x, y].getOpen()) || (x == aiPos.x && y == aiPos.y)); //keep trying until sp is open
 		goalPos = new Cords(x, y);
 
@@ -344,9 +345,11 @@ public class Game : MonoBehaviour
 	void MainFunc(Cords pos)
 	{
 		MovePlayer(pos);
-		//Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
-	
-		if (true) {
+        //Debug.Log("Current Position: (" + aiPath[0].x + ", " + aiPath[0].y + ")");
+        setFSM();
+		if (isNear > isFar) {
+            //evading
+            theAI.GetComponent<Renderer>().material.color = Color.red;
 			reset = true;
 			Debug.Log("AI Position: (" + aiPos.x + ", " + aiPos.y + ")");
 			Debug.Log("Goal Position: (" + goalPos.x + ", " + goalPos.y + ")");
@@ -359,7 +362,9 @@ public class Game : MonoBehaviour
 			ai_EndPos = target.transform.position;
 			t = 0; //reset timer
 		} else {
-			if (reset) {
+            //pursuing
+            theAI.GetComponent<Renderer>().material.color = Color.green;
+            if (reset) {
 				reset = false;
 				aiPath.Clear();
 				aiPath.Add(aiPos);
@@ -629,4 +634,29 @@ public class Game : MonoBehaviour
 
 		return bestPath;
 	}
+
+    //here lies the fuzzy logic
+    float isFar, isNear, evade, pursue;
+    public float linear(float value, float x0, float x1)
+    {
+        float result = 0;
+        float x = value;
+        if (x <= x0) result = 0;
+        else if (x >= x1) result = 1;
+        else result = (x / (x1 - x0)) - (x0 / (x1 - x0));
+        return result;
+    }
+    float NOT(float f) { return (1 - f); }
+    float OR(float f1, float f2) { return Math.Max(f1, f2); }
+    float AND(float f1, float f2) { return Math.Min(f1, f2); }
+    void setFSM()
+    {
+        float distX = playerPos.x - aiPos.x;
+        float distY = playerPos.y - aiPos.y;
+        float distance = ((distX * distX) + (distY * distY)) * (0.5f);
+        isFar = linear(distance, 3.0f, 7.0f); //should define what is considered as far
+        isNear = linear(distance, 0, 2.9f);
+        evade = NOT(isFar); //the enemy is not far
+        pursue = NOT(isNear); //the enemy is not near
+    }
 }
