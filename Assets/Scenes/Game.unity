@@ -2389,6 +2389,11 @@ SpriteRenderer:
   m_Size: {x: 0.64, y: 0.64}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
+--- !u!1 &995173991 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 1590956022725834, guid: 93393410135d37f4e813d19d0395d80f,
+    type: 2}
+  m_PrefabInternal: {fileID: 1315397554}
 --- !u!1 &1001991986
 GameObject:
   m_ObjectHideFlags: 0
@@ -3614,7 +3619,7 @@ Prefab:
     - target: {fileID: 114115574210374026, guid: 93393410135d37f4e813d19d0395d80f,
         type: 2}
       propertyPath: m_Text
-      value: 
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 114115574210374026, guid: 93393410135d37f4e813d19d0395d80f,
         type: 2}
@@ -4188,6 +4193,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0304f3325a7d5ad4cbf2dc045e0c7825, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scoretext: {fileID: 995173991}
   tileParent: {fileID: 8069611}
   AI: {fileID: 1253370624350228, guid: 15aaf0f748914604d977f497179a61b7, type: 2}
   Finish: {fileID: 1603265275894456, guid: 3ab1a11aca588a043b1fee9a40b5ca82, type: 2}

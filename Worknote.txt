@@ -1,0 +1,7 @@
+Michael Ranciglio - Wrote code for pathfinding, avoiding, and block structures, also functionalized pathfinding script inorder to function with second part of lab.
+ 
+Aaron Gunther - Created prefabs, grid, found textures, created scoreboard script, helped implement lee's algorithm for pathfinding, wrote part 1 report.
+
+Jonathon Bryant -  Helped with the coding of the fuzzy logic and writing the second report. Helped debug exercise 2.
+
+Stephen Sladek - 
